@@ -2,6 +2,8 @@ import PySimpleGUI as sg
 import base64
 from os.path import dirname, join
 
+from src.gui.constants import CallbackKey
+
 
 class MainLayout(object):
     """
@@ -9,9 +11,12 @@ class MainLayout(object):
     Skeleton inspired by Demo Programs Browser sample for PySimpleGUI.
     """
     SPLIT_PANE = "SPLIT_PANE"
-    SYNC_DROPDOWN = "SYNC_DROPDOWN"
+    SOURCE = "Source"
+    DESTINATION = "Destination"
 
-    def __init__(self):
+    SYNC_OPTIONS = ["One-way", "Two-way", "Update"]
+
+    def __init__(self) -> None:
         sg.theme("DarkBlue13")
 
         gui_directory = dirname(__file__)
@@ -33,8 +38,8 @@ class MainLayout(object):
         components = [[
             sg.T('Select style of synchronization:'),
             sg.Combo(
-                ["Test 1", "Test 2", "Test 3"],
-                k=self.SYNC_DROPDOWN,
+                self.SYNC_OPTIONS,
+                k=CallbackKey.SYNC_DROPDOWN,
                 default_value="<none>",
                 size=(30, 30),
                 enable_events=True,
@@ -42,29 +47,32 @@ class MainLayout(object):
             )
         ]]
 
-        return sg.Column(components)
+        return sg.Column(components, element_justification='c', expand_x=True)
 
     @staticmethod
     def create_file_panel(direction: str, folder_name: str) -> sg.Column:
         components = [
-            [sg.T(f"{direction} folder: {folder_name}")],
+            [sg.T(f"{direction}:"), sg.I(size=35), sg.FolderBrowse(k=direction)],
             [sg.Multiline(k=folder_name, size=(60, 30), write_only=True)]
         ]
 
         return sg.Column(components, element_justification='c', expand_x=True, expand_y=True)
 
     @staticmethod
-    def create_bottom_buttons() -> list:
-        return [sg.B(x) for x in ('Synchronize...', 'Settings', 'Exit')]
+    def create_bottom_buttons() -> sg.Column:
+        button_pairs = [('Settings', CallbackKey.SETTINGS), ('Synchronize...', CallbackKey.SYNCHRONIZE), ('Exit', 'Exit')]
+        components = [[sg.B(x, k=key) for (x, key) in button_pairs]]
+        return sg.Column(components, element_justification='c', expand_x=True)
 
-    def create_layout(self):
+    def create_layout(self) -> list:
         return [
             [sg.T('Lockstep', font='Calibri 20')],
             [self.create_sync_method_dropdown()],
             [sg.Pane(
-                [self.create_file_panel("Source", "Folder 1"), self.create_file_panel("Destination", "Folder 2")],
+                [self.create_file_panel(self.SOURCE, "Folder 1"), self.create_file_panel(self.DESTINATION, "Folder 2")],
                 k=self.SPLIT_PANE,
-                orientation='h'
+                orientation='h',
+                pad=(30, 20)
             )],
             [self.create_bottom_buttons()]
         ]
