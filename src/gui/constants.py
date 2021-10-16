@@ -9,5 +9,12 @@ class Enum(set):
         raise AttributeError
 
 
-CallbackKey = Enum(["SETTINGS", "SYNCHRONIZE", "SYNC_DROPDOWN"])
+CallbackKey = Enum([
+    "SETTINGS",
+    "EVALUATE",
+    "SYNCHRONIZE",
+    "SOURCE_FOLDER",
+    "DESTINATION_FOLDER",
+    "SYNC_DROPDOWN"
+])
 
