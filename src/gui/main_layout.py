@@ -2,7 +2,7 @@ import PySimpleGUI as sg
 import base64
 from os.path import dirname, join
 
-from src.gui.constants import CallbackKey
+from src.gui.constants import CallbackKey, SyncOptions
 
 
 class MainLayout(object):
@@ -10,9 +10,6 @@ class MainLayout(object):
     GUI framework for file synchronization.
     Skeleton inspired by Demo Programs Browser sample for PySimpleGUI.
     """
-    SPLIT_PANE = "SPLIT_PANE"
-    SYNC_OPTIONS = ["One-way", "Two-way", "Update"]
-
     def __init__(self) -> None:
         sg.theme("DarkBlue13")
 
@@ -31,11 +28,12 @@ class MainLayout(object):
         import ctypes
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('arbitrary string')
 
-    def create_sync_method_dropdown(self) -> sg.Column:
+    @staticmethod
+    def create_sync_method_dropdown() -> sg.Column:
         components = [[
             sg.T('Select style of synchronization:'),
             sg.Combo(
-                self.SYNC_OPTIONS,
+                sorted(SyncOptions),
                 k=CallbackKey.SYNC_DROPDOWN,
                 default_value="<none>",
                 size=(30, 30),
@@ -47,10 +45,11 @@ class MainLayout(object):
         return sg.Column(components, element_justification='c', expand_x=True)
 
     @staticmethod
-    def create_file_panel(direction: str, folder_name: str, input_key: str) -> sg.Column:
+    def create_file_panel(direction: str, multiline_key: str, input_key: str) -> sg.Column:
         components = [
             [sg.T(f"{direction}:"), sg.I(size=35, enable_events=True, k=input_key), sg.FolderBrowse(k=direction)],
-            [sg.Multiline(k=folder_name, size=(60, 30), write_only=True)]
+            [sg.Tree(data=sg.TreeData(), k=multiline_key, headings=[""], visible_column_map=[False], expand_x=True,
+                     expand_y=True)]
         ]
 
         return sg.Column(components, element_justification='c', expand_x=True, expand_y=True)
@@ -70,12 +69,13 @@ class MainLayout(object):
             [self.create_sync_method_dropdown()],
             [sg.Pane(
                 [
-                    self.create_file_panel("Source", "Folder 1", CallbackKey.SOURCE_FOLDER),
-                    self.create_file_panel("Destination", "Folder 2", CallbackKey.DESTINATION_FOLDER)
+                    self.create_file_panel("Source", CallbackKey.SOURCE_TREE, CallbackKey.SOURCE_FOLDER),
+                    self.create_file_panel("Destination", CallbackKey.DESTINATION_TREE, CallbackKey.DESTINATION_FOLDER)
                 ],
-                k=self.SPLIT_PANE,
                 orientation='h',
-                pad=(30, 20)
+                pad=(30, 20),
+                expand_x=True,
+                expand_y=True
             )],
             [self.create_bottom_buttons()]
         ])
@@ -86,7 +86,7 @@ class MainLayout(object):
     def create_layout(self) -> list:
         return [
             [sg.T('Lockstep', font='Calibri 20')],
-            [sg.TabGroup([[self.create_sync_tab(), self.create_settings_tab()]])]
+            [sg.TabGroup([[self.create_sync_tab(), self.create_settings_tab()]], k=CallbackKey.TAB_GROUP)]
         ]
 
     def create_window(self) -> sg.Window:
@@ -99,8 +99,11 @@ class MainLayout(object):
             icon=self.icon
         )
 
-        window.set_min_size(window.size)
-        window[self.SPLIT_PANE].expand(True, True, True)
+        window.set_min_size((1280, 720))
+        window[CallbackKey.TAB_GROUP].expand(True, True, True)
+
+        for tree in [CallbackKey.SOURCE_TREE, CallbackKey.DESTINATION_TREE]:
+            window[tree].Widget.heading("#0", text="File Path")  # workaround to set data in column 0
 
         window.bring_to_front()
         return window

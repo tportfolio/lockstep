@@ -12,9 +12,19 @@ class Enum(set):
 CallbackKey = Enum([
     "SETTINGS",
     "EVALUATE",
+    "EVALUATION_COMPLETE",
     "SYNCHRONIZE",
     "SOURCE_FOLDER",
+    "SOURCE_TREE",
     "DESTINATION_FOLDER",
-    "SYNC_DROPDOWN"
+    "DESTINATION_TREE",
+    "SYNC_DROPDOWN",
+    "TAB_GROUP"
+])
+
+SyncOptions = Enum([
+    "One-way",
+    "Two-way",
+    "Update"
 ])
 
