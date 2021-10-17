@@ -2,21 +2,26 @@ import PySimpleGUI as sg
 from os.path import exists
 from threading import Thread
 
-from src.gui.main_layout import MainLayout
-from src.gui.constants import CallbackKey, SyncOptions
 from src.file_diff.file_diff_evaluator import FileDiffEvaluator
 from src.file_diff.file_synchronizer import FileSynchronizer
+from src.gui.main_layout import MainLayout
+from src.gui.constants import CallbackKey, SettingsKey, SyncOptions
 from src.gui.utilities import gen_treedata
 from src.gui.images import ADD_ICON, REMOVE_ICON
+from src.settings.settings import GuiSettings
 
 
 class GuiManager(object):
     def __init__(self):
+        self.gui_settings = GuiSettings()
+        self.gui_settings.load_settings()
+
         self.file_diff_evaluator = FileDiffEvaluator(
             lambda diff: self.emit_event(CallbackKey.EVALUATION_COMPLETE, diff))
-        self.file_synchronizer = FileSynchronizer()
+        self.file_synchronizer = FileSynchronizer(self.gui_settings.gui_settings[SettingsKey.ENABLE_PURGE])
 
         self.window = MainLayout().create_window()
+        self.window[CallbackKey.CONFIGURATION_DROPDOWN].update(values=list(self.gui_settings.configurations.keys()))
         self.values = {}
 
         self.callbacks = {
@@ -24,8 +29,11 @@ class GuiManager(object):
             CallbackKey.EVALUATION_COMPLETE: self.display_file_diff,
             CallbackKey.SYNCHRONIZE: self.sync_folders,
             CallbackKey.SYNC_DROPDOWN: self.on_sync_dropdown,
+            CallbackKey.CONFIGURATION_DROPDOWN: self.on_configuration_dropdown,
+            CallbackKey.SAVE_CONFIGURATION: self.on_configuration_save,
             CallbackKey.SOURCE_FOLDER: lambda: self.evaluate_path_validity(CallbackKey.SOURCE_FOLDER),
-            CallbackKey.DESTINATION_FOLDER: lambda: self.evaluate_path_validity(CallbackKey.DESTINATION_FOLDER)
+            CallbackKey.DESTINATION_FOLDER: lambda: self.evaluate_path_validity(CallbackKey.DESTINATION_FOLDER),
+            SettingsKey.ENABLE_PURGE: self.purge_checkbox
         }
 
     def run(self):
@@ -40,7 +48,7 @@ class GuiManager(object):
 
         self.window.close()
 
-    def emit_event(self, key, value):
+    def emit_event(self, key: str, value: str):
         self.window.write_event_value(key, value)
 
     def has_callback(self, key: str) -> bool:
@@ -50,10 +58,7 @@ class GuiManager(object):
         self.values = values
         self.callbacks[key]()
 
-    def placeholder_callback(self) -> None:
-        print(self.values)
-
-    def get_path_state(self):
+    def get_path_state(self) -> list:
         return [self.values[key] for key in [
             CallbackKey.SOURCE_FOLDER,
             CallbackKey.DESTINATION_FOLDER,
@@ -71,6 +76,30 @@ class GuiManager(object):
 
     def on_sync_dropdown(self) -> None:
         self.update_button_states()
+
+    def on_configuration_dropdown(self) -> None:
+        key = self.values[CallbackKey.CONFIGURATION_DROPDOWN]
+        if key not in self.gui_settings.configurations:  # shouldn't happen
+            print(f"Unexpected key in configurations: {key}")
+            return
+
+        metadata = self.gui_settings.configurations[key]
+        src, dst, sync = metadata["src"], metadata["dst"], metadata["sync"]
+
+        self.values[CallbackKey.SOURCE_FOLDER] = src
+        self.values[CallbackKey.DESTINATION_FOLDER] = dst
+        self.values[CallbackKey.SYNC_DROPDOWN] = sync
+
+        self.window[CallbackKey.SOURCE_FOLDER].update(src)
+        self.window[CallbackKey.DESTINATION_FOLDER].update(dst)
+        self.window[CallbackKey.SYNC_DROPDOWN].update(sync)
+
+        for key in [CallbackKey.SOURCE_FOLDER, CallbackKey.DESTINATION_FOLDER]:
+            self.evaluate_path_validity(key)
+
+    def on_configuration_save(self) -> None:
+        key = self.values[CallbackKey.CONFIGURATION_DROPDOWN]
+        self.gui_settings.update_configuration(key, dict(zip(["src", "dst", "sync"], self.get_path_state())))
 
     def evaluate_path_validity(self, key: str) -> None:
         filepath = self.values[key]
@@ -91,3 +120,7 @@ class GuiManager(object):
     def sync_folders(self) -> None:
         Thread(target=self.file_synchronizer.run_sync, args=[*self.get_path_state()]).start()
 
+    def purge_checkbox(self) -> None:
+        value = self.values[SettingsKey.ENABLE_PURGE]
+        self.gui_settings.update_gui_setting(SettingsKey.ENABLE_PURGE, value)
+        self.file_synchronizer.enable_purge = value

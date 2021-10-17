@@ -1,8 +1,6 @@
 import PySimpleGUI as sg
-import base64
-from os.path import dirname, join
 
-from src.gui.constants import CallbackKey, SyncOptions
+from src.gui.constants import CallbackKey, SettingsKey, SyncOptions
 from src.gui.images import LOCK_ICON
 
 
@@ -42,6 +40,22 @@ class MainLayout(object):
         return sg.Column(components, element_justification='c', expand_x=True)
 
     @staticmethod
+    def create_configuration_dropdown() -> sg.Column:
+        components = [[
+            sg.T('Select/create configuration:'),
+            sg.Combo(
+                [],
+                k=CallbackKey.CONFIGURATION_DROPDOWN,
+                default_value="<none>",
+                size=(30, 30),
+                enable_events=True
+            ),
+            sg.B('Save', k=CallbackKey.SAVE_CONFIGURATION)
+        ]]
+
+        return sg.Column(components, element_justification='c', expand_x=True)
+
+    @staticmethod
     def create_file_panel(direction: str, multiline_key: str, input_key: str) -> sg.Column:
         components = [
             [sg.T(f"{direction}:"), sg.I(size=35, enable_events=True, k=input_key), sg.FolderBrowse(k=direction)],
@@ -63,6 +77,7 @@ class MainLayout(object):
 
     def create_sync_tab(self) -> sg.Tab:
         return sg.Tab("Synchronize", [
+            [self.create_configuration_dropdown()],
             [sg.Pane(
                 [
                     self.create_file_panel("Source", CallbackKey.SOURCE_TREE, CallbackKey.SOURCE_FOLDER),
@@ -77,8 +92,11 @@ class MainLayout(object):
             [self.create_bottom_buttons()]
         ])
 
-    def create_settings_tab(self):
-        return sg.Tab("Settings", [[]])
+    @staticmethod
+    def create_settings_tab():
+        return sg.Tab("Settings", [
+            [sg.Checkbox("Enable file purge on sync", k=SettingsKey.ENABLE_PURGE, enable_events=True, pad=(10, 10))]
+        ])
 
     def create_layout(self) -> list:
         return [

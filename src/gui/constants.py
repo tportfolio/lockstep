@@ -18,6 +18,8 @@ CallbackKey = Enum([
     "DESTINATION_FOLDER",
     "DESTINATION_TREE",
     "SYNC_DROPDOWN",
+    "CONFIGURATION_DROPDOWN",
+    "SAVE_CONFIGURATION",
     "TAB_GROUP"
 ])
 
@@ -26,3 +28,7 @@ SyncOptions = {
     "TWO_WAY": "Two-way",
     "UPDATE": "Update",
 }
+
+SettingsKey = Enum([
+    "ENABLE_PURGE"
+])
