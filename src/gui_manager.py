@@ -3,14 +3,17 @@ from os.path import exists, dirname, basename
 from threading import Thread
 
 from src.gui.main_layout import MainLayout
-from src.gui.constants import CallbackKey
+from src.gui.constants import CallbackKey, SyncOptions
 from src.file_diff.file_diff_evaluator import FileDiffEvaluator
+from src.file_diff.file_synchronizer import FileSynchronizer
 
 
 class GuiManager(object):
     def __init__(self):
         self.file_diff_evaluator = FileDiffEvaluator(
             lambda diff: self.emit_event(CallbackKey.EVALUATION_COMPLETE, diff))
+        self.file_synchronizer = FileSynchronizer()
+
         self.window = MainLayout().create_window()
         self.values = {}
 
@@ -18,8 +21,8 @@ class GuiManager(object):
             CallbackKey.SETTINGS: self.placeholder_callback,
             CallbackKey.EVALUATE: self.evaluate_file_diff,
             CallbackKey.EVALUATION_COMPLETE: self.display_file_diff,
-            CallbackKey.SYNCHRONIZE: self.placeholder_callback,
-            CallbackKey.SYNC_DROPDOWN: self.placeholder_callback,
+            CallbackKey.SYNCHRONIZE: self.sync_folders,
+            CallbackKey.SYNC_DROPDOWN: self.on_sync_dropdown,
             CallbackKey.SOURCE_FOLDER: lambda: self.evaluate_path_validity(CallbackKey.SOURCE_FOLDER),
             CallbackKey.DESTINATION_FOLDER: lambda: self.evaluate_path_validity(CallbackKey.DESTINATION_FOLDER)
         }
@@ -49,17 +52,27 @@ class GuiManager(object):
     def placeholder_callback(self) -> None:
         print(self.values)
 
+    def update_button_states(self) -> None:
+        src = self.values[CallbackKey.SOURCE_FOLDER]
+        dst = self.values[CallbackKey.DESTINATION_FOLDER]
+        sync_style = self.values[CallbackKey.SYNC_DROPDOWN]
+
+        evaluate_button_disabled = not (exists(src) and exists(dst))
+        self.window[CallbackKey.EVALUATE].update(disabled=evaluate_button_disabled)
+
+        synchronize_button_disabled = evaluate_button_disabled or sync_style not in SyncOptions.values()
+        self.window[CallbackKey.SYNCHRONIZE].update(disabled=synchronize_button_disabled)
+
+    def on_sync_dropdown(self) -> None:
+        self.update_button_states()
+
     def evaluate_path_validity(self, key: str) -> None:
         filepath = self.values[key]
         if filepath:
             background_color = "#a4db9e" if exists(filepath) else "#f7cddb"
             self.window[key].update(background_color=background_color)
 
-        src = self.values[CallbackKey.SOURCE_FOLDER]
-        dst = self.values[CallbackKey.DESTINATION_FOLDER]
-
-        evaluate_button_disabled = not (exists(src) and exists(dst))
-        self.window[CallbackKey.EVALUATE].update(disabled=evaluate_button_disabled)
+        self.update_button_states()
 
     def evaluate_file_diff(self) -> None:
         src = self.values[CallbackKey.SOURCE_FOLDER]
@@ -71,6 +84,12 @@ class GuiManager(object):
         left, right = self.values[CallbackKey.EVALUATION_COMPLETE]
         self.window[CallbackKey.SOURCE_TREE].update(self.gen_treedata(sorted(left)))
         self.window[CallbackKey.DESTINATION_TREE].update(self.gen_treedata(sorted(right)))
+
+    def sync_folders(self) -> None:
+        src = self.values[CallbackKey.SOURCE_FOLDER]
+        dst = self.values[CallbackKey.DESTINATION_FOLDER]
+        sync_style = self.values[CallbackKey.SYNC_DROPDOWN]
+        Thread(target=self.file_synchronizer.run_sync, args=[src, dst, sync_style]).start()
 
     @staticmethod
     def gen_treedata(data) -> sg.TreeData:

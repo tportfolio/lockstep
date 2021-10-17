@@ -8,12 +8,12 @@ class FileDiffEvaluator(object):
 
     def generate_file_diff(self, src, dst, sync_style):
         print(f"Received file diff options: src={src}, dst={dst}, sync_style={sync_style}")
-        src_delta, dst_delta = self.file_diff(src, dst)
-        self.callback([[self.normalize_path(x) for x in src_delta], [self.normalize_path(x) for x in dst_delta]])
+        deltas = self.file_diff(src, dst)
+        self.callback([self.normalize_paths(delta) for delta in deltas])
 
     @staticmethod
-    def normalize_path(path):
-        return normpath(path).replace("\\", "/")
+    def normalize_paths(paths):
+        return [normpath(path).replace("\\", "/") for path in paths]
 
     def file_diff(self, src, dst):
         """

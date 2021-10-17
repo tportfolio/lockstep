@@ -22,9 +22,9 @@ CallbackKey = Enum([
     "TAB_GROUP"
 ])
 
-SyncOptions = Enum([
-    "One-way",
-    "Two-way",
-    "Update"
-])
+SyncOptions = {
+    "ONE_WAY": "One-way",
+    "TWO_WAY": "Two-way",
+    "UPDATE": "Update",
+}
 

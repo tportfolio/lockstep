@@ -33,7 +33,7 @@ class MainLayout(object):
         components = [[
             sg.T('Select style of synchronization:'),
             sg.Combo(
-                sorted(SyncOptions),
+                sorted(SyncOptions.values()),
                 k=CallbackKey.SYNC_DROPDOWN,
                 default_value="<none>",
                 size=(30, 30),
@@ -66,17 +66,17 @@ class MainLayout(object):
 
     def create_sync_tab(self) -> sg.Tab:
         return sg.Tab("Synchronize", [
-            [self.create_sync_method_dropdown()],
             [sg.Pane(
                 [
                     self.create_file_panel("Source", CallbackKey.SOURCE_TREE, CallbackKey.SOURCE_FOLDER),
                     self.create_file_panel("Destination", CallbackKey.DESTINATION_TREE, CallbackKey.DESTINATION_FOLDER)
                 ],
                 orientation='h',
-                pad=(30, 20),
+                pad=(30, 5),
                 expand_x=True,
                 expand_y=True
             )],
+            [self.create_sync_method_dropdown()],
             [self.create_bottom_buttons()]
         ])
 
@@ -99,7 +99,7 @@ class MainLayout(object):
             icon=self.icon
         )
 
-        window.set_min_size((1280, 720))
+        window.set_min_size(window.size)
         window[CallbackKey.TAB_GROUP].expand(True, True, True)
 
         for tree in [CallbackKey.SOURCE_TREE, CallbackKey.DESTINATION_TREE]:
