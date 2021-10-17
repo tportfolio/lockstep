@@ -9,9 +9,9 @@ class FileSynchronizer(object):
 
     def run_sync(self, src, dst, style):
         if self.sync_option_dict[style] == "ONE_WAY":
-            sync(src, dst, "sync")
+            sync(src, dst, "sync", purge=True)
         elif self.sync_option_dict[style] == "TWO_WAY":
-            sync(src, dst, "sync", twoway=True)
+            sync(src, dst, "sync", twoway=True, purge=True)
         elif self.sync_option_dict[style] == "UPDATE":
             sync(src, dst, "update")
         else:

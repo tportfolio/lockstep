@@ -10,7 +10,6 @@ class Enum(set):
 
 
 CallbackKey = Enum([
-    "SETTINGS",
     "EVALUATE",
     "EVALUATION_COMPLETE",
     "SYNCHRONIZE",
@@ -27,4 +26,3 @@ SyncOptions = {
     "TWO_WAY": "Two-way",
     "UPDATE": "Update",
 }
-

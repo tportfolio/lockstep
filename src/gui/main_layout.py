@@ -3,6 +3,7 @@ import base64
 from os.path import dirname, join
 
 from src.gui.constants import CallbackKey, SyncOptions
+from src.gui.images import LOCK_ICON
 
 
 class MainLayout(object):
@@ -12,10 +13,6 @@ class MainLayout(object):
     """
     def __init__(self) -> None:
         sg.theme("DarkBlue13")
-
-        gui_directory = dirname(__file__)
-        # credit to MUI for original SVG path of this icon
-        self.icon = base64.b64encode(open(join(gui_directory, "res/lock.png"), 'rb').read())
         self.run_taskbar_icon_boilerplate()
 
     @staticmethod
@@ -96,7 +93,7 @@ class MainLayout(object):
             finalize=True,
             resizable=True,
             use_default_focus=False,
-            icon=self.icon
+            icon=LOCK_ICON
         )
 
         window.set_min_size(window.size)

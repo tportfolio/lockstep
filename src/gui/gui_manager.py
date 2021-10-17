@@ -1,11 +1,13 @@
 import PySimpleGUI as sg
-from os.path import exists, dirname, basename
+from os.path import exists
 from threading import Thread
 
 from src.gui.main_layout import MainLayout
 from src.gui.constants import CallbackKey, SyncOptions
 from src.file_diff.file_diff_evaluator import FileDiffEvaluator
 from src.file_diff.file_synchronizer import FileSynchronizer
+from src.gui.utilities import gen_treedata
+from src.gui.images import ADD_ICON, REMOVE_ICON
 
 
 class GuiManager(object):
@@ -18,7 +20,6 @@ class GuiManager(object):
         self.values = {}
 
         self.callbacks = {
-            CallbackKey.SETTINGS: self.placeholder_callback,
             CallbackKey.EVALUATE: self.evaluate_file_diff,
             CallbackKey.EVALUATION_COMPLETE: self.display_file_diff,
             CallbackKey.SYNCHRONIZE: self.sync_folders,
@@ -52,10 +53,15 @@ class GuiManager(object):
     def placeholder_callback(self) -> None:
         print(self.values)
 
+    def get_path_state(self):
+        return [self.values[key] for key in [
+            CallbackKey.SOURCE_FOLDER,
+            CallbackKey.DESTINATION_FOLDER,
+            CallbackKey.SYNC_DROPDOWN
+        ]]
+
     def update_button_states(self) -> None:
-        src = self.values[CallbackKey.SOURCE_FOLDER]
-        dst = self.values[CallbackKey.DESTINATION_FOLDER]
-        sync_style = self.values[CallbackKey.SYNC_DROPDOWN]
+        src, dst, sync_style = self.get_path_state()
 
         evaluate_button_disabled = not (exists(src) and exists(dst))
         self.window[CallbackKey.EVALUATE].update(disabled=evaluate_button_disabled)
@@ -75,43 +81,13 @@ class GuiManager(object):
         self.update_button_states()
 
     def evaluate_file_diff(self) -> None:
-        src = self.values[CallbackKey.SOURCE_FOLDER]
-        dst = self.values[CallbackKey.DESTINATION_FOLDER]
-        sync_style = self.values[CallbackKey.SYNC_DROPDOWN]
-        Thread(target=self.file_diff_evaluator.generate_file_diff, args=[src, dst, sync_style]).start()
+        Thread(target=self.file_diff_evaluator.generate_file_diff, args=[*self.get_path_state()]).start()
 
     def display_file_diff(self) -> None:
         left, right = self.values[CallbackKey.EVALUATION_COMPLETE]
-        self.window[CallbackKey.SOURCE_TREE].update(self.gen_treedata(sorted(left)))
-        self.window[CallbackKey.DESTINATION_TREE].update(self.gen_treedata(sorted(right)))
+        self.window[CallbackKey.SOURCE_TREE].update(gen_treedata(sorted(left), ADD_ICON))
+        self.window[CallbackKey.DESTINATION_TREE].update(gen_treedata(sorted(right), REMOVE_ICON))
 
     def sync_folders(self) -> None:
-        src = self.values[CallbackKey.SOURCE_FOLDER]
-        dst = self.values[CallbackKey.DESTINATION_FOLDER]
-        sync_style = self.values[CallbackKey.SYNC_DROPDOWN]
-        Thread(target=self.file_synchronizer.run_sync, args=[src, dst, sync_style]).start()
+        Thread(target=self.file_synchronizer.run_sync, args=[*self.get_path_state()]).start()
 
-    @staticmethod
-    def gen_treedata(data) -> sg.TreeData:
-        treedata = sg.TreeData()
-
-        for path in data:
-            parent_folder = dirname(path)
-            folders = parent_folder.split("/")
-            filename = basename(path)
-
-            # iteratively add parent folders as keys to tree, if necessary
-            for i, folder in enumerate(folders):
-                parent = "/".join(folders[:i])
-                if not parent:
-                    parent = ''
-
-                curr = "/".join(folders[:i+1])
-                val = folders[i]
-                if curr not in treedata.tree_dict:
-                    treedata.insert(parent, curr, val, values=[])
-
-            # insert file into tree
-            treedata.insert(parent_folder, path, filename, values=[])
-
-        return treedata

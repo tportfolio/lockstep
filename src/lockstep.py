@@ -1,4 +1,4 @@
-from src.gui_manager import GuiManager
+from src.gui.gui_manager import GuiManager
 
 
 def main() -> None:
