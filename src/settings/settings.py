@@ -27,7 +27,7 @@ class GuiSettings(object):
             makedirs(self.base_folder)
 
         if not exists(self.settings_file):
-            self.save_to_file(self.settings_file, self.gui_settings)
+            self.__save_to_file(self.settings_file, self.gui_settings)
         else:
             with open(self.settings_file, "r") as sf:
                 self.gui_settings = json.load(sf)
@@ -40,7 +40,7 @@ class GuiSettings(object):
         print(f"Configurations are: {self.configurations}")
 
     @staticmethod
-    def save_to_file(filename: str, data: dict) -> None:
+    def __save_to_file(filename: str, data: dict) -> None:
         """
         Write dictionary to file.
         :param filename: filename
@@ -92,7 +92,7 @@ class GuiSettings(object):
         :return: None
         """
         self.gui_settings[k] = v
-        self.save_to_file(self.settings_file, self.gui_settings)
+        self.__save_to_file(self.settings_file, self.gui_settings)
 
     def update_configuration(self, k: str, kv_pairs: dict) -> None:
         """
@@ -102,4 +102,4 @@ class GuiSettings(object):
         :return: None
         """
         self.configurations[k] = kv_pairs
-        self.save_to_file(self.configurations_file, self.configurations)
+        self.__save_to_file(self.configurations_file, self.configurations)

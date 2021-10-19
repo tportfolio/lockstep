@@ -9,7 +9,7 @@ class FileSynchronizer(object):
     """
     def __init__(self, enable_purge):
         # inverse dictionary to look up text values from GUI
-        self.sync_option_dict = {v: k for k, v in SyncOptions.items()}
+        self.__sync_option_dict = {v: k for k, v in SyncOptions.items()}
         self.__enable_purge = enable_purge
 
     @property
@@ -37,11 +37,11 @@ class FileSynchronizer(object):
         :param style: how to sync folder (one-way, two-way, update)
         :return: None
         """
-        if self.sync_option_dict[style] == "ONE_WAY":
+        if self.__sync_option_dict[style] == "ONE_WAY":
             sync(src, dst, "sync", purge=self.enable_purge)
-        elif self.sync_option_dict[style] == "TWO_WAY":
+        elif self.__sync_option_dict[style] == "TWO_WAY":
             sync(src, dst, "sync", twoway=True, purge=self.enable_purge)
-        elif self.sync_option_dict[style] == "UPDATE":
+        elif self.__sync_option_dict[style] == "UPDATE":
             sync(src, dst, "update")
         else:
             print(f"Received unexpected sync style: {style}")

@@ -11,10 +11,10 @@ class MainLayout(object):
     """
     def __init__(self) -> None:
         sg.theme("DarkBlue13")
-        self.run_taskbar_icon_boilerplate()
+        self.__run_taskbar_icon_boilerplate()
 
     @staticmethod
-    def run_taskbar_icon_boilerplate() -> None:
+    def __run_taskbar_icon_boilerplate() -> None:
         """
         Enables ability to set taskbar icon in Windows.
         See: https://stackoverflow.com/a/1552105
@@ -24,7 +24,7 @@ class MainLayout(object):
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('arbitrary string')
 
     @staticmethod
-    def create_sync_method_dropdown() -> sg.Column:
+    def __create_sync_method_dropdown() -> sg.Column:
         """
         Creates sync dropdown for one-way, two-way, and update options.
         :return: column wrapper of dropdown
@@ -44,7 +44,7 @@ class MainLayout(object):
         return sg.Column(components, element_justification='c', expand_x=True)
 
     @staticmethod
-    def create_configuration_dropdown() -> sg.Column:
+    def __create_configuration_dropdown() -> sg.Column:
         """
         Creates configuration dropdown for saved configurations.
         :return: column wrapper of dropdown
@@ -64,7 +64,7 @@ class MainLayout(object):
         return sg.Column(components, element_justification='c', expand_x=True)
 
     @staticmethod
-    def create_file_panel(direction: str, tree_key: str, input_key: str) -> sg.Column:
+    def __create_file_panel(direction: str, tree_key: str, input_key: str) -> sg.Column:
         """
         Creates panel that represents data for either the source or destination folder.
         :param direction: src/dst
@@ -81,7 +81,7 @@ class MainLayout(object):
         return sg.Column(components, element_justification='c', expand_x=True, expand_y=True)
 
     @staticmethod
-    def create_bottom_buttons() -> sg.Column:
+    def __create_bottom_buttons() -> sg.Column:
         """
         Creates evaluate/sync/exit buttons at bottom of GUI.
         :return: column wrapper for buttons
@@ -94,29 +94,29 @@ class MainLayout(object):
         components = [[sg.B(x, k=key, disabled=disabled) for (x, key, disabled) in button_pairs]]
         return sg.Column(components, element_justification='c', expand_x=True)
 
-    def create_sync_tab(self) -> sg.Tab:
+    def __create_sync_tab(self) -> sg.Tab:
         """
         Creates tab wrapper for synchronization view.
         :return: tab wrapper of paned window and associated components
         """
         return sg.Tab("Synchronize", [
-            [self.create_configuration_dropdown()],
+            [self.__create_configuration_dropdown()],
             [sg.Pane(
                 [
-                    self.create_file_panel("Source", CallbackKey.SOURCE_TREE, CallbackKey.SOURCE_FOLDER),
-                    self.create_file_panel("Destination", CallbackKey.DESTINATION_TREE, CallbackKey.DESTINATION_FOLDER)
+                    self.__create_file_panel("Source", CallbackKey.SOURCE_TREE, CallbackKey.SOURCE_FOLDER),
+                    self.__create_file_panel("Destination", CallbackKey.DESTINATION_TREE, CallbackKey.DESTINATION_FOLDER)
                 ],
                 orientation='h',
                 pad=(30, 5),
                 expand_x=True,
                 expand_y=True
             )],
-            [self.create_sync_method_dropdown()],
-            [self.create_bottom_buttons()]
+            [self.__create_sync_method_dropdown()],
+            [self.__create_bottom_buttons()]
         ])
 
     @staticmethod
-    def create_settings_tab() -> sg.Tab:
+    def __create_settings_tab() -> sg.Tab:
         """
         Creates tab wrapper for GUI settings.
         :return: tab wrapper for GUI settings
@@ -125,14 +125,14 @@ class MainLayout(object):
             [sg.Checkbox("Enable file purge on sync", k=SettingsKey.ENABLE_PURGE, enable_events=True, pad=(10, 10))]
         ])
 
-    def create_layout(self) -> list:
+    def __create_layout(self) -> list:
         """
         Creates top-level layout component list.
         :return: list of top-level components
         """
         return [
             [sg.T('Lockstep', font='Calibri 20')],
-            [sg.TabGroup([[self.create_sync_tab(), self.create_settings_tab()]], k=CallbackKey.TAB_GROUP)]
+            [sg.TabGroup([[self.__create_sync_tab(), self.__create_settings_tab()]], k=CallbackKey.TAB_GROUP)]
         ]
 
     def create_window(self) -> sg.Window:
@@ -142,7 +142,7 @@ class MainLayout(object):
         """
         window = sg.Window(
             'Lockstep',
-            self.create_layout(),
+            self.__create_layout(),
             finalize=True,
             resizable=True,
             use_default_focus=False,
