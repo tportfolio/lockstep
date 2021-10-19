@@ -12,10 +12,14 @@ from src.settings.settings import GuiSettings
 
 
 class GuiManager(object):
-    def __init__(self):
+    """
+    This class handles events from the GUI and runs callback methods based on the event value(s).
+    """
+    def __init__(self) -> None:
         self.gui_settings = GuiSettings()
         self.gui_settings.load_settings()
 
+        # TODO: pass these as arguments to support daemon service
         self.file_diff_evaluator = FileDiffEvaluator(
             lambda diff: self.emit_event(CallbackKey.EVALUATION_COMPLETE, diff))
         self.file_synchronizer = FileSynchronizer(self.gui_settings.gui_settings[SettingsKey.ENABLE_PURGE])
@@ -36,7 +40,11 @@ class GuiManager(object):
             SettingsKey.ENABLE_PURGE: self.purge_checkbox
         }
 
-    def run(self):
+    def run(self) -> None:
+        """
+        Run in continuous loop until window is exited.
+        :return: None
+        """
         while True:
             event, values = self.window.read()
             if event in (sg.WINDOW_CLOSED, 'Exit'):
@@ -48,17 +56,38 @@ class GuiManager(object):
 
         self.window.close()
 
-    def emit_event(self, key: str, value: str):
+    def emit_event(self, key: str, value: str) -> None:
+        """
+        Manually create event for window.
+        :param key: event
+        :param value: value
+        :return: None
+        """
         self.window.write_event_value(key, value)
 
     def has_callback(self, key: str) -> bool:
+        """
+        Wrapper for existence of key in callback dictionary.
+        :param key: event name
+        :return: boolean indicating existing of corresponding callback
+        """
         return key in self.callbacks
 
     def execute_callback(self, key: str, values: dict) -> None:
+        """
+        Store incoming values from window and execute callback.
+        :param key: callback key
+        :param values: values from window
+        :return: None
+        """
         self.values = values
         self.callbacks[key]()
 
     def get_path_state(self) -> list:
+        """
+        Grabs most commonly used state values for sync paths.
+        :return: list of values (src, dst, sync style)
+        """
         return [self.values[key] for key in [
             CallbackKey.SOURCE_FOLDER,
             CallbackKey.DESTINATION_FOLDER,
@@ -66,6 +95,10 @@ class GuiManager(object):
         ]]
 
     def update_button_states(self) -> None:
+        """
+        Update button states based on changes to paths and sync option.
+        :return: None
+        """
         src, dst, sync_style = self.get_path_state()
 
         evaluate_button_disabled = not (exists(src) and exists(dst))
@@ -75,9 +108,17 @@ class GuiManager(object):
         self.window[CallbackKey.SYNCHRONIZE].update(disabled=synchronize_button_disabled)
 
     def on_sync_dropdown(self) -> None:
+        """
+        Update button states when sync dropdown option changes.
+        :return: None
+        """
         self.update_button_states()
 
     def on_configuration_dropdown(self) -> None:
+        """
+        Populate configuration details into GUI.
+        :return: None
+        """
         key = self.values[CallbackKey.CONFIGURATION_DROPDOWN]
         if key not in self.gui_settings.configurations:  # shouldn't happen
             print(f"Unexpected key in configurations: {key}")
@@ -98,10 +139,19 @@ class GuiManager(object):
             self.evaluate_path_validity(key)
 
     def on_configuration_save(self) -> None:
+        """
+        Save configuration to file.
+        :return: None
+        """
         key = self.values[CallbackKey.CONFIGURATION_DROPDOWN]
         self.gui_settings.update_configuration(key, dict(zip(["src", "dst", "sync"], self.get_path_state())))
 
     def evaluate_path_validity(self, key: str) -> None:
+        """
+        Reflect existence of path with background color in each folder field.
+        :param key: folder key
+        :return: None
+        """
         filepath = self.values[key]
         if filepath:
             background_color = "#a4db9e" if exists(filepath) else "#f7cddb"
@@ -110,17 +160,33 @@ class GuiManager(object):
         self.update_button_states()
 
     def evaluate_file_diff(self) -> None:
+        """
+        Run file diff evaluator.
+        :return: None
+        """
         Thread(target=self.file_diff_evaluator.generate_file_diff, args=[*self.get_path_state()]).start()
 
     def display_file_diff(self) -> None:
+        """
+        Take file diff and transform it into file trees for source and destination folders.
+        :return: None
+        """
         left, right = self.values[CallbackKey.EVALUATION_COMPLETE]
         self.window[CallbackKey.SOURCE_TREE].update(gen_treedata(sorted(left), ADD_ICON))
         self.window[CallbackKey.DESTINATION_TREE].update(gen_treedata(sorted(right), REMOVE_ICON))
 
     def sync_folders(self) -> None:
+        """
+        Run file sync process.
+        :return: None
+        """
         Thread(target=self.file_synchronizer.run_sync, args=[*self.get_path_state()]).start()
 
     def purge_checkbox(self) -> None:
+        """
+        Globally update enable purge checkbox state.
+        :return: None
+        """
         value = self.values[SettingsKey.ENABLE_PURGE]
         self.gui_settings.update_gui_setting(SettingsKey.ENABLE_PURGE, value)
         self.file_synchronizer.enable_purge = value

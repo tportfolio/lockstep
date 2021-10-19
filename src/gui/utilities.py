@@ -3,6 +3,12 @@ from os.path import dirname, basename
 
 
 def gen_treedata(data: list, icon: bytes) -> sg.TreeData:
+    """
+    Transforms folder delta into file tree that is displayed in GUI.
+    :param data: list of files
+    :param icon: icon to represent direction of file movement
+    :return: PySimpleGUI tree data structure
+    """
     treedata = sg.TreeData()
 
     for path in data:

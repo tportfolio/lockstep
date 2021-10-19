@@ -25,6 +25,10 @@ class MainLayout(object):
 
     @staticmethod
     def create_sync_method_dropdown() -> sg.Column:
+        """
+        Creates sync dropdown for one-way, two-way, and update options.
+        :return: column wrapper of dropdown
+        """
         components = [[
             sg.T('Select style of synchronization:'),
             sg.Combo(
@@ -41,6 +45,10 @@ class MainLayout(object):
 
     @staticmethod
     def create_configuration_dropdown() -> sg.Column:
+        """
+        Creates configuration dropdown for saved configurations.
+        :return: column wrapper of dropdown
+        """
         components = [[
             sg.T('Select/create configuration:'),
             sg.Combo(
@@ -56,10 +64,17 @@ class MainLayout(object):
         return sg.Column(components, element_justification='c', expand_x=True)
 
     @staticmethod
-    def create_file_panel(direction: str, multiline_key: str, input_key: str) -> sg.Column:
+    def create_file_panel(direction: str, tree_key: str, input_key: str) -> sg.Column:
+        """
+        Creates panel that represents data for either the source or destination folder.
+        :param direction: src/dst
+        :param tree_key: unique key to identify folder file tree
+        :param input_key: unique key to identify folder path text field
+        :return: column wrapper for panel
+        """
         components = [
             [sg.T(f"{direction}:"), sg.I(size=35, enable_events=True, k=input_key), sg.FolderBrowse(k=direction)],
-            [sg.Tree(data=sg.TreeData(), k=multiline_key, headings=[""], visible_column_map=[False], expand_x=True,
+            [sg.Tree(data=sg.TreeData(), k=tree_key, headings=[""], visible_column_map=[False], expand_x=True,
                      expand_y=True)]
         ]
 
@@ -67,6 +82,10 @@ class MainLayout(object):
 
     @staticmethod
     def create_bottom_buttons() -> sg.Column:
+        """
+        Creates evaluate/sync/exit buttons at bottom of GUI.
+        :return: column wrapper for buttons
+        """
         button_pairs = [
             ("Evaluate", CallbackKey.EVALUATE, True),
             ("Synchronize...", CallbackKey.SYNCHRONIZE, True),
@@ -76,6 +95,10 @@ class MainLayout(object):
         return sg.Column(components, element_justification='c', expand_x=True)
 
     def create_sync_tab(self) -> sg.Tab:
+        """
+        Creates tab wrapper for synchronization view.
+        :return: tab wrapper of paned window and associated components
+        """
         return sg.Tab("Synchronize", [
             [self.create_configuration_dropdown()],
             [sg.Pane(
@@ -93,18 +116,30 @@ class MainLayout(object):
         ])
 
     @staticmethod
-    def create_settings_tab():
+    def create_settings_tab() -> sg.Tab:
+        """
+        Creates tab wrapper for GUI settings.
+        :return: tab wrapper for GUI settings
+        """
         return sg.Tab("Settings", [
             [sg.Checkbox("Enable file purge on sync", k=SettingsKey.ENABLE_PURGE, enable_events=True, pad=(10, 10))]
         ])
 
     def create_layout(self) -> list:
+        """
+        Creates top-level layout component list.
+        :return: list of top-level components
+        """
         return [
             [sg.T('Lockstep', font='Calibri 20')],
             [sg.TabGroup([[self.create_sync_tab(), self.create_settings_tab()]], k=CallbackKey.TAB_GROUP)]
         ]
 
     def create_window(self) -> sg.Window:
+        """
+        Creates PySimpleGUI window. Sets some values by direct access to wrapped Tkinter components.
+        :return: PySimpleGUI window
+        """
         window = sg.Window(
             'Lockstep',
             self.create_layout(),
